@@ -1,0 +1,59 @@
+***		 Taner Mustafa	-	325 CB	-	Tema 1 PC	-	06 Aprilie 2019		 ***
+
+
+Observatie: Local, toate testele imi trec cu timpi constanti mult mai mici decat 
+cei de pe VMCHECKER si mai mici si decat timpii din checkerul local. Ruland 
+checkerul local, timpii cresc in mod inexplicabil, dar oricum sunt mici.
+Am atasat un <screenshot> cu timpii obtinuti pe checkerul local (timpi 
+obtinuti in mod constant), mult mai mici decat cei ce de pe VMCHECKER.
+
+
+****						Implementarea temei:							****
+
+	In fisierele auxiliare <aux> am definit structurile pe care le folosesc 
+pentru trimiterea pachetelor si cele pentru ACK. Sunt comentate fiecare, astfel 
+incat sa se inteleaga modul de utilizare.
+
+	Deoarece codul este bine comentat si implementarea este explicata, voi 
+explica mai pe larg functionarea generala a protocolului de ferastra glisanta.
+
+
+***								In <send.c>:								 ***
+	Se calculeaza dimensiunea ferestrei si se seteaza timeoutul optim in functie 
+de aceasta. Afland dimensiunea fisierului, se stabileste numarul de pachete ce 
+va trebui trimis.
+	Se citeste fisierul in bucati egale cu dimensiunea unui pachet si se 
+salveaza temporar fiecare pachet intr-un array alocat dinamic. Intr-un vector 
+se retin pachetele transmise cu succes.
+	Cat timp fereastra nu este plina, se trimit succesiv pachetele din stocare, 
+in ordinea citirii lor din fisier.
+	Dupa ce se umple fereastra, se alterneaza intre a astepta un ACK si a 
+trimite inca un pachet pentru a mentine fereastra plina.
+	Fie ca ACK-ul este primit in timpul setat sau nu, se considera ca s-a 
+eliberat un cadru in fereastra si se poate trimite un nou pachet.
+	Se trimit numai pachetele pentru care nu s-a primit inca o confirmare ca au 
+fost primite cu succes.
+	Vectorul de pachete este parcurs ciclic de la cap la coada pana se constata 
+ca nu au mai ramas pachete netrimise cu succes din el.
+	Pentru pachetele corupte se primeste un ACK special si acestea sunt 
+retrimise.
+	Senderul asteapta un ACK special de la receiver pentru a sti cand sa se 
+inchida.
+
+
+***								In <recv.c>:								 ***
+	Initial, numarul de pachete care trebuie primite este setat 8000, peste 
+valoarea maxima posibila.
+	Acesta primeste continuu pachete si retine numarul primit. Cand este primit 
+pachetul cu metadata (care are numar de ordine special) numarul de pachete care 
+trebuie primite este corectat.
+	Cand checkSumul calculat al unui pachet nu este egal cu cel primit odata cu 
+acesta, se trimite un ACK special care anunta acest lucru.
+	Cand se primeste un pachet duplicat, se ignora.
+	Pe masura ce se primesc, pachetele sunt stocate temporar pentru a putea fi 
+livrate ordonat.
+	Primirea mesajelor se incheie cand s-au primit toate pachetele.
+	Se executa scrierea din stocarea temporara in fisierul de output si se 
+trimite ACK-ul special care anunta senderul de terminarea conexiunii.
+	
+	
